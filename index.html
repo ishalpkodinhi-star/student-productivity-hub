@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101713">
+  <title>Student Productivity Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="#" class="logo">Study<span>Hub.</span></a>
+    <span class="tag">YOUR STUDY SPACE</span>
+  </header>
+
+  <main class="container">
+
+    <section class="welcome">
+      <p class="eyebrow">YOUR PERSONAL WORKSPACE</p>
+      <h1>Study smarter.<br><span>Achieve more.</span></h1>
+      <p>Plan your day, finish your tasks, and reach your goals.</p>
+      <div id="today" class="date-box"></div>
+    </section>
+
+    <section class="stats">
+      <article class="stat-card">
+        <span>Total tasks</span>
+        <strong id="totalTasks">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Completed</span>
+        <strong id="completedTasks">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Progress</span>
+        <strong id="progress">0%</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>My Assignments</h2>
+      <p class="muted">Add tasks and track your progress.</p>
+
+      <form id="taskForm">
+        <label for="taskInput">Assignment name</label>
+        <input id="taskInput" type="text"
+          placeholder="e.g. Complete maths notes" required>
+
+        <label for="taskDate">Due date</label>
+        <input id="taskDate" type="date" required>
+
+        <button type="submit">+ Add Assignment</button>
+      </form>
+
+      <div id="taskList" class="task-list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Study Timetable</h2>
+      <p class="muted">Plan your study sessions.</p>
+
+      <form id="scheduleForm">
+        <label for="subjectInput">Subject</label>
+        <input id="subjectInput" type="text"
+          placeholder="e.g. Physics" required>
+
+        <label for="dayInput">Day</label>
+        <select id="dayInput">
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+          <option>Sunday</option>
+        </select>
+
+        <label for="timeInput">Study time</label>
+        <input id="timeInput" type="time" required>
+
+        <button type="submit">+ Add Study Session</button>
+      </form>
+
+      <div id="scheduleList" class="task-list"></div>
+    </section>
+
+    <section class="panel timer-panel">
+      <p class="eyebrow">FOCUS MODE</p>
+      <h2>Study Timer</h2>
+      <p class="muted">Focus for 25 minutes.</p>
+
+      <div id="timer" class="timer">25:00</div>
+
+      <div class="timer-buttons">
+        <button id="startTimer">Start</button>
+        <button id="pauseTimer" class="secondary">Pause</button>
+        <button id="resetTimer" class="secondary">Reset</button>
+      </div>
+
+      <p id="timerMessage" class="muted">Ready when you are.</p>
+    </section>
+
+    <footer class="footer">
+      Made for your goals. Keep learning, keep growing.
+    </footer>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
