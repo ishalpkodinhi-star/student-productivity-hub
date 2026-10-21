@@ -370,3 +370,105 @@ function renderAll() {
 
 $("sessionDate").value = dateKey(new Date());
 renderAll();
+/* ---------- STUDY TIMER ---------- */
+
+let timerDuration = 25 * 60;
+let timerRemaining = timerDuration;
+let timerInterval = null;
+let timerEndTime = null;
+
+const timerDisplay = document.getElementById("timerDisplay");
+const timerStatus = document.getElementById("timerStatus");
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timerRemaining / 60);
+  const seconds = timerRemaining % 60;
+
+  timerDisplay.textContent =
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0");
+
+  document.title = timerInterval
+    ? `${timerDisplay.textContent} - Study Hub`
+    : "Student Productivity Hub";
+}
+
+function stopTimer() {
+  if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  timerEndTime = null;
+  updateTimerDisplay();
+}
+
+function tickTimer() {
+  if (timerEndTime === null) return;
+
+  timerRemaining = Math.max(
+    0,
+    Math.ceil((timerEndTime - Date.now()) / 1000)
+  );
+
+  updateTimerDisplay();
+
+  if (timerRemaining <= 0) {
+    stopTimer();
+    timerStatus.textContent = "🎉 Focus session complete!";
+    alert("Great job! Your study timer is complete.");
+  }
+}
+
+document.querySelectorAll(".timer-preset").forEach(button => {
+  button.addEventListener("click", () => {
+    stopTimer();
+
+    timerDuration = Number(button.dataset.minutes) * 60;
+    timerRemaining = timerDuration;
+
+    document.querySelectorAll(".timer-preset").forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
+
+    timerStatus.textContent = "Ready to focus";
+    updateTimerDisplay();
+  });
+});
+
+document.getElementById("timerStart").addEventListener("click", () => {
+  if (timerInterval !== null) return;
+
+  if (timerRemaining <= 0) {
+    timerRemaining = timerDuration;
+  }
+
+  timerEndTime = Date.now() + timerRemaining * 1000;
+  timerStatus.textContent = "🔥 Focus time — keep going!";
+
+  timerInterval = setInterval(tickTimer, 250);
+  tickTimer();
+});
+
+document.getElementById("timerPause").addEventListener("click", () => {
+  if (timerInterval === null) return;
+
+  tickTimer();
+
+  if (timerInterval !== null) {
+    stopTimer();
+    timerStatus.textContent = "Timer paused";
+  }
+});
+
+document.getElementById("timerReset").addEventListener("click", () => {
+  stopTimer();
+  timerRemaining = timerDuration;
+  timerStatus.textContent = "Ready to focus";
+  updateTimerDisplay();
+});
+
+document.querySelector('.timer-preset[data-minutes="25"]')
+  .classList.add("active");
+
+updateTimerDisplay();
