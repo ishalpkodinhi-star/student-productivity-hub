@@ -1,221 +1,372 @@
 const $ = (id) => document.getElementById(id);
 
-function loadData(key) {
+const STORAGE_KEY = "ishalStudentHubV2";
+
+function loadData() {
   try {
-    const data = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(data) ? data : [];
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    return {
+      tasks: Array.isArray(data.tasks) ? data.tasks : [],
+      sessions: Array.isArray(data.sessions) ? data.sessions : []
+    };
   } catch {
-    return [];
+    return { tasks: [], sessions: [] };
   }
 }
 
-let tasks = loadData("studyHubTasks");
-let sessions = loadData("studyHubSessions");
+let data = loadData();
 
 function saveData() {
   try {
-    localStorage.setItem("studyHubTasks", JSON.stringify(tasks));
-    localStorage.setItem("studyHubSessions", JSON.stringify(sessions));
-    return true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch {
-    alert("Unable to save data. Check your browser storage settings.");
-    return false;
+    alert("Could not save data. Please export a backup.");
   }
 }
 
-function makeElement(tag, className, text) {
-  const el = document.createElement(tag);
-  if (className) el.className = className;
-  if (text !== undefined) el.textContent = text;
-  return el;
+function dateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-// Show today's date
-$("today").textContent = new Date().toLocaleDateString(
-  undefined,
-  { weekday: "long", year: "numeric", month: "long", day: "numeric" }
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function makeId() {
+  return Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 8);
+}
+
+let selectedDate = dateKey(new Date());
+let displayedMonth = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth(),
+  1
 );
 
-// Dashboard counts
-function updateStats() {
-  const completed = tasks.filter(task => task.done).length;
-  $("totalTasks").textContent = tasks.length;
-  $("completedTasks").textContent = completed;
-  $("progress").textContent = tasks.length
-    ? Math.round(completed / tasks.length * 100) + "%"
-    : "0%";
-}
+// ---------- CALENDAR ----------
 
-// Render assignments safely
-function renderTasks() {
-  const list = $("taskList");
-  list.replaceChildren();
+function renderCalendar() {
+  const grid = $("calendarGrid");
+  const label = $("monthLabel");
 
-  if (!tasks.length) {
-    list.append(makeElement("p", "muted", "No assignments yet. Add your first task!"));
-  }
+  if (!grid || !label) return;
 
-  tasks.forEach(task => {
-    const card = makeElement("div", "task-item" + (task.done ? " done" : ""));
-    const name = makeElement("div", "task-name", task.name);
-    const due = makeElement("div", "task-meta", "Due: " + task.date);
-    const actions = makeElement("div", "task-actions");
-    const toggle = makeElement("button", "secondary", task.done ? "Undo" : "Complete");
-    const remove = makeElement("button", "secondary", "Delete");
+  const year = displayedMonth.getFullYear();
+  const month = displayedMonth.getMonth();
 
-    toggle.type = "button";
-    remove.type = "button";
-
-    toggle.addEventListener("click", () => {
-      task.done = !task.done;
-      saveData();
-      renderTasks();
-      updateStats();
-    });
-
-    remove.addEventListener("click", () => {
-      tasks = tasks.filter(item => item.id !== task.id);
-      saveData();
-      renderTasks();
-      updateStats();
-    });
-
-    actions.append(toggle, remove);
-    card.append(name, due, actions);
-    list.append(card);
+  label.textContent = displayedMonth.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
   });
 
-  updateStats();
+  grid.innerHTML = "";
+
+  // JavaScript Sunday = 0. Convert to Monday-first calendar.
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const blanks = (firstWeekday + 6) % 7;
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const today = dateKey(new Date());
+
+  for (let i = 0; i < blanks; i++) {
+    const empty = document.createElement("div");
+    empty.className = "calendar-day empty";
+    empty.setAttribute("aria-hidden", "true");
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const current = new Date(year, month, day);
+    const key = dateKey(current);
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "calendar-day";
+    button.textContent = day;
+
+    if (key === today) button.classList.add("today");
+    if (key === selectedDate) button.classList.add("selected");
+
+    if (data.tasks.some(task => task.due === key && !task.done)) {
+      button.classList.add("has-task");
+    }
+
+    button.setAttribute("aria-label", current.toDateString());
+
+    button.addEventListener("click", () => {
+      selectedDate = key;
+      renderCalendar();
+      renderTasks();
+    });
+
+    grid.appendChild(button);
+  }
+
+  $("selectedDate").textContent =
+    "Selected date: " +
+    new Date(year, month, Number(selectedDate.slice(8, 10)))
+      .toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+  // Correct the selected-date label when selected date is in another month.
+  const parts = selectedDate.split("-").map(Number);
+  $("selectedDate").textContent =
+    "Selected date: " +
+    new Date(parts[0], parts[1] - 1, parts[2])
+      .toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+  renderDateTasks();
 }
+
+$("prevMonth").addEventListener("click", () => {
+  displayedMonth = new Date(
+    displayedMonth.getFullYear(),
+    displayedMonth.getMonth() - 1,
+    1
+  );
+  renderCalendar();
+});
+
+$("nextMonth").addEventListener("click", () => {
+  displayedMonth = new Date(
+    displayedMonth.getFullYear(),
+    displayedMonth.getMonth() + 1,
+    1
+  );
+  renderCalendar();
+});
+
+$("todayBtn").addEventListener("click", () => {
+  const today = new Date();
+  selectedDate = dateKey(today);
+  displayedMonth = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1
+  );
+  renderCalendar();
+  renderTasks();
+});
+
+function renderDateTasks() {
+  const box = $("dateTasks");
+  const matching = data.tasks.filter(task => task.due === selectedDate);
+
+  if (!matching.length) {
+    box.innerHTML = '<p class="empty-message">No assignments for this date.</p>';
+    return;
+  }
+
+  box.innerHTML = matching.map(task => `
+    <p class="empty-message">
+      ${task.done ? "✓" : "•"}
+      ${escapeHTML(task.title)} — ${escapeHTML(task.subject)}
+      ${task.done ? "(Completed)" : "(Pending)"}
+    </p>
+  `).join("");
+}
+
+// ---------- ASSIGNMENTS ----------
 
 $("taskForm").addEventListener("submit", event => {
   event.preventDefault();
 
-  const name = $("taskInput").value.trim();
-  const date = $("taskDate").value;
+  const title = $("taskTitle").value.trim();
+  const subject = $("taskSubject").value.trim();
+  const due = $("taskDue").value;
 
-  if (!name || !date) return;
+  if (!title || !subject || !due) {
+    alert("Please fill in all assignment fields.");
+    return;
+  }
 
-  tasks.push({
-    id: Date.now() + Math.random(),
-    name,
-    date,
+  data.tasks.push({
+    id: makeId(),
+    title,
+    subject,
+    due,
+    priority: $("taskPriority").value,
     done: false
   });
 
+  selectedDate = due;
+  const parts = due.split("-").map(Number);
+  displayedMonth = new Date(parts[0], parts[1] - 1, 1);
+
   saveData();
   $("taskForm").reset();
-  renderTasks();
+  renderAll();
 });
 
-// Render timetable
-function renderSessions() {
-  const list = $("scheduleList");
-  list.replaceChildren();
+$("taskSearch").addEventListener("input", renderTasks);
+$("taskFilter").addEventListener("change", renderTasks);
 
-  if (!sessions.length) {
-    list.append(makeElement("p", "muted", "No study sessions yet."));
+function renderTasks() {
+  const search = $("taskSearch").value.trim().toLowerCase();
+  const filter = $("taskFilter").value;
+  const list = $("taskList");
+
+  const tasks = data.tasks.filter(task => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(search) ||
+      task.subject.toLowerCase().includes(search);
+
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "pending" && !task.done) ||
+      (filter === "completed" && task.done);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  if (!tasks.length) {
+    list.innerHTML = '<p class="empty-message">No assignments found. Add your first task above!</p>';
+  } else {
+    list.innerHTML = tasks.map(task => `
+      <article class="task-item ${task.done ? "done" : ""}">
+        <div class="task-info">
+          <h3>${escapeHTML(task.title)}</h3>
+          <p>${escapeHTML(task.subject)} · Due: ${escapeHTML(task.due)}</p>
+          <p class="priority">Priority: ${escapeHTML(task.priority)}</p>
+        </div>
+        <div class="task-actions">
+          <button class="small-btn" data-action="toggle"
+            data-id="${task.id}" type="button">
+            ${task.done ? "Undo" : "Complete"}
+          </button>
+          <button class="small-btn delete-btn" data-action="delete"
+            data-id="${task.id}" type="button">Delete</button>
+        </div>
+      </article>
+    `).join("");
   }
 
-  const days = [
-    "Monday", "Tuesday", "Wednesday", "Thursday",
-    "Friday", "Saturday", "Sunday"
-  ];
+  $("totalCount").textContent = data.tasks.length;
+  $("completedCount").textContent =
+    data.tasks.filter(task => task.done).length;
 
-  [...sessions]
-    .sort((a, b) =>
-      days.indexOf(a.day) - days.indexOf(b.day) ||
-      a.time.localeCompare(b.time)
-    )
-    .forEach(session => {
-      const card = makeElement("div", "task-item");
-      const name = makeElement("div", "task-name", session.subject);
-      const info = makeElement("div", "task-meta", session.day + " • " + session.time);
-      const remove = makeElement("button", "secondary", "Remove");
-
-      remove.type = "button";
-      remove.addEventListener("click", () => {
-        sessions = sessions.filter(item => item.id !== session.id);
-        saveData();
-        renderSessions();
-      });
-
-      card.append(name, info, remove);
-      list.append(card);
-    });
+  renderDateTasks();
 }
 
-$("scheduleForm").addEventListener("submit", event => {
+$("taskList").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const task = data.tasks.find(t => t.id === button.dataset.id);
+  if (!task) return;
+
+  if (button.dataset.action === "toggle") {
+    task.done = !task.done;
+  } else if (button.dataset.action === "delete") {
+    if (!confirm("Delete this assignment?")) return;
+    data.tasks = data.tasks.filter(t => t.id !== task.id);
+  }
+
+  saveData();
+  renderAll();
+});
+
+// ---------- STUDY SESSIONS ----------
+
+$("sessionForm").addEventListener("submit", event => {
   event.preventDefault();
 
-  const subject = $("subjectInput").value.trim();
-  const day = $("dayInput").value;
-  const time = $("timeInput").value;
+  const subject = $("sessionSubject").value.trim();
+  const date = $("sessionDate").value;
+  const duration = Number($("sessionDuration").value);
 
-  if (!subject || !time) return;
+  if (!subject || !date || !Number.isFinite(duration) ||
+      duration < 1 || duration > 1440) {
+    alert("Enter a valid subject, date and duration.");
+    return;
+  }
 
-  sessions.push({
-    id: Date.now() + Math.random(),
+  data.sessions.unshift({
+    id: makeId(),
     subject,
-    day,
-    time
+    date,
+    duration
   });
 
   saveData();
-  $("scheduleForm").reset();
+  $("sessionForm").reset();
+  $("sessionDate").value = dateKey(new Date());
+  $("sessionDuration").value = 30;
   renderSessions();
 });
 
-// 25-minute focus timer
-let remaining = 25 * 60;
-let timerInterval = null;
+function renderSessions() {
+  $("sessionCount").textContent = data.sessions.length;
+  const list = $("sessionList");
 
-function showTimer() {
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-
-  $("timer").textContent =
-    String(minutes).padStart(2, "0") + ":" +
-    String(seconds).padStart(2, "0");
-}
-
-function pauseTimer() {
-  if (timerInterval !== null) {
-    clearInterval(timerInterval);
-    timerInterval = null;
+  if (!data.sessions.length) {
+    list.innerHTML = '<p class="empty-message">No study sessions yet. Start studying!</p>';
+    return;
   }
+
+  list.innerHTML = data.sessions.map(session => `
+    <article class="session-item">
+      <div>
+        <strong>${escapeHTML(session.subject)}</strong>
+        <p>${escapeHTML(session.date)} · ${session.duration} minutes</p>
+      </div>
+      <button type="button" class="small-btn delete-btn"
+        data-session-delete="${session.id}">Delete</button>
+    </article>
+  `).join("");
 }
 
-$("startTimer").addEventListener("click", () => {
-  if (timerInterval !== null || remaining <= 0) return;
+$("sessionList").addEventListener("click", event => {
+  const button = event.target.closest("[data-session-delete]");
+  if (!button) return;
 
-  $("timerMessage").textContent = "Focus on your study session!";
+  data.sessions = data.sessions.filter(
+    session => session.id !== button.dataset.sessionDelete
+  );
 
-  timerInterval = setInterval(() => {
-    remaining--;
-    showTimer();
-
-    if (remaining <= 0) {
-      pauseTimer();
-      $("timerMessage").textContent = "Session complete! Time for a short break.";
-      alert("Well done! Your 25-minute study session is complete.");
-    }
-  }, 1000);
+  saveData();
+  renderSessions();
 });
 
-$("pauseTimer").addEventListener("click", () => {
-  pauseTimer();
-  $("timerMessage").textContent = "Timer paused.";
+// ---------- EXPORT BACKUP ----------
+
+$("exportBtn").addEventListener("click", () => {
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ishal-study-hub-backup.json";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-$("resetTimer").addEventListener("click", () => {
-  pauseTimer();
-  remaining = 25 * 60;
-  showTimer();
-  $("timerMessage").textContent = "Ready when you are.";
-});
+// ---------- INITIALISE ----------
 
-// Load saved information on opening the website
-renderTasks();
-renderSessions();
-showTimer();
+function renderAll() {
+  renderTasks();
+  renderCalendar();
+  renderSessions();
+}
+
+$("sessionDate").value = dateKey(new Date());
+renderAll();
