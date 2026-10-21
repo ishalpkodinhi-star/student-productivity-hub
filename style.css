@@ -402,3 +402,52 @@ footer strong {
     align-items: flex-start;
   }
 }
+/* Study Timer */
+.timer-panel {
+  text-align: center;
+}
+
+.timer-subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.timer-presets,
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.timer-preset.active {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+.timer-display {
+  font-size: clamp(54px, 12vw, 82px);
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  padding: 15px 0;
+}
+
+.timer-status {
+  color: var(--muted);
+  min-height: 24px;
+}
+
+.timer-controls .primary-btn {
+  min-width: 100px;
+}
+
+@media (max-width: 480px) {
+  .timer-controls button,
+  .timer-presets button {
+    flex: 1;
+  }
+}
