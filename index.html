@@ -1,220 +1,147 @@
-<!DOCTYPE html>
+
+
+  
+
+    <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101713">
-  <meta name="description" content="A personal student dashboard for assignments, study sessions and productivity.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10140f">
   <title>Student Productivity Hub</title>
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="#">Study<span>Hub.</span></a>
-    <div class="top-actions">
-      <span id="todayLabel" class="muted small"></span>
-      <button id="exportBtn" class="button secondary small-btn">Export backup</button>
-    </div>
+    <a class="brand" href="#">Student <span>Hub.</span></a>
+    <button id="exportBtn" class="outline-btn" type="button">
+      Export Backup
+    </button>
   </header>
 
   <main class="container">
     <section class="hero">
       <p class="eyebrow">YOUR PERSONAL WORKSPACE</p>
       <h1>Study smarter.<br><span>Achieve more.</span></h1>
-      <p class="muted">Small steps every day lead to big results.</p>
-      <div class="hero-bottom">
-        <span id="welcomeDate"></span>
-        <span class="status"><span class="status-dot"></span> Your study space</span>
-      </div>
+      <p>Organise assignments, plan your days and track your progress.</p>
     </section>
 
-    <section class="stats-grid" aria-label="Study statistics">
+    <section class="stats">
       <article class="stat-card">
-        <span>Total assignments</span>
-        <strong id="totalTasks">0</strong>
-        <small>All your tasks</small>
+        <p>Total assignments</p>
+        <h2 id="totalCount">0</h2>
       </article>
       <article class="stat-card">
-        <span>Completed</span>
-        <strong id="completedTasks">0</strong>
-        <small>Tasks finished</small>
+        <p>Completed</p>
+        <h2 id="completedCount">0</h2>
       </article>
       <article class="stat-card">
-        <span>Overdue</span>
-        <strong id="overdueTasks">0</strong>
-        <small>Past due dates</small>
-      </article>
-      <article class="stat-card">
-        <span>Completion</span>
-        <strong id="progress">0%</strong>
-        <div class="progress-track">
-          <div id="progressBar" class="progress-fill"></div>
-        </div>
+        <p>Study sessions</p>
+        <h2 id="sessionCount">0</h2>
       </article>
     </section>
 
     <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">STAY ORGANIZED</p>
-          <h2>My assignments</h2>
-        </div>
-        <span id="taskCount" class="pill">0 tasks</span>
-      </div>
-
+      <p class="eyebrow">STAY ORGANIZED</p>
+      <h2>Add assignment</h2>
       <form id="taskForm" class="form-grid">
-        <div class="field wide">
-          <label for="taskInput">Assignment name</label>
-          <input id="taskInput" maxlength="120" placeholder="e.g. Complete maths notes" required>
-        </div>
-        <div class="field">
-          <label for="taskSubject">Subject</label>
-          <input id="taskSubject" list="subjectOptions" maxlength="60" placeholder="e.g. Mathematics" required>
-          <datalist id="subjectOptions"></datalist>
-        </div>
-        <div class="field">
-          <label for="taskDate">Due date</label>
-          <input id="taskDate" type="date" required>
-        </div>
-        <div class="field">
-          <label for="taskPriority">Priority</label>
+        <label>
+          Assignment name
+          <input id="taskTitle" required maxlength="100"
+                 placeholder="e.g. Data Structures record">
+        </label>
+        <label>
+          Subject
+          <input id="taskSubject" required maxlength="60"
+                 placeholder="e.g. Computer Science">
+        </label>
+        <label>
+          Due date
+          <input id="taskDue" type="date" required>
+        </label>
+        <label>
+          Priority
           <select id="taskPriority">
             <option value="Normal">Normal</option>
             <option value="High">High</option>
             <option value="Low">Low</option>
           </select>
-        </div>
-        <button class="button wide" type="submit">+ Add assignment</button>
+        </label>
+        <button class="primary-btn full" type="submit">
+          + Add assignment
+        </button>
       </form>
 
       <div class="toolbar">
-        <input id="taskSearch" type="search" placeholder="Search assignments..." aria-label="Search assignments">
+        <input id="taskSearch" placeholder="Search assignments..."
+               aria-label="Search assignments">
         <select id="taskFilter" aria-label="Filter assignments">
           <option value="all">All tasks</option>
           <option value="pending">Pending</option>
           <option value="completed">Completed</option>
-          <option value="overdue">Overdue</option>
         </select>
       </div>
-      <div id="taskList" class="item-list"></div>
+      <div id="taskList" class="task-list"></div>
     </section>
 
     <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">PLAN AHEAD</p>
-          <h2>Study calendar</h2>
+      <p class="eyebrow">PLAN AHEAD</p>
+      <h2>Study calendar</h2>
+
+      <div class="calendar-header">
+        <button id="prevMonth" class="outline-btn"
+                type="button" aria-label="Previous month">←</button>
+        <h3 id="monthLabel">Loading calendar...</h3>
+        <div class="calendar-actions">
+          <button id="nextMonth" class="outline-btn"
+                  type="button" aria-label="Next month">→</button>
+          <button id="todayBtn" class="outline-btn"
+                  type="button">Today</button>
         </div>
       </div>
-      <div class="calendar-nav">
-        <button id="prevMonth" class="button secondary icon-btn" aria-label="Previous month">←</button>
-        <h3 id="monthLabel"></h3>
-        <button id="nextMonth" class="button secondary icon-btn" aria-label="Next month">→</button>
-        <button id="todayBtn" class="button secondary small-btn">Today</button>
+
+      <div class="calendar-grid weekdays">
+        <span>Mon</span><span>Tue</span><span>Wed</span>
+        <span>Thu</span><span>Fri</span><span>Sat</span>
+        <span>Sun</span>
       </div>
-      <div class="calendar-weekdays">
-        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-      </div>
+
       <div id="calendarGrid" class="calendar-grid"></div>
-      <div class="selected-date">
-        <h3 id="selectedDateLabel">Selected date</h3>
-        <div id="calendarEvents" class="item-list"></div>
-      </div>
+      <p id="selectedDate" class="selected-date" aria-live="polite"></p>
+      <div id="dateTasks"></div>
     </section>
 
     <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">BUILD CONSISTENCY</p>
-          <h2>Study sessions</h2>
-        </div>
-        <span id="sessionCount" class="pill">0 sessions</span>
-      </div>
+      <p class="eyebrow">BUILD CONSISTENCY</p>
+      <h2>Study sessions</h2>
 
       <form id="sessionForm" class="form-grid">
-        <div class="field">
-          <label for="subjectInput">Subject</label>
-          <input id="subjectInput" list="subjectOptions" maxlength="60" placeholder="e.g. Physics" required>
-        </div>
-        <div class="field">
-          <label for="sessionDate">Date</label>
+        <label>
+          Subject
+          <input id="sessionSubject" required maxlength="60"
+                 placeholder="e.g. Mathematics">
+        </label>
+        <label>
+          Study date
           <input id="sessionDate" type="date" required>
-        </div>
-        <div class="field">
-          <label for="timeInput">Start time</label>
-          <input id="timeInput" type="time" required>
-        </div>
-        <div class="field">
-          <label for="durationInput">Duration (minutes)</label>
-          <input id="durationInput" type="number" min="5" max="600" value="45" required>
-        </div>
-        <div class="field wide">
-          <label for="sessionNotes">Notes (optional)</label>
-          <input id="sessionNotes" maxlength="200" placeholder="What will you study?">
-        </div>
-        <button class="button wide" type="submit">+ Add study session</button>
+        </label>
+        <label>
+          Duration (minutes)
+          <input id="sessionDuration" type="number"
+                 min="1" max="1440" required value="30">
+        </label>
+        <button class="primary-btn full" type="submit">
+          + Add study session
+        </button>
       </form>
 
-      <div class="toolbar">
-        <select id="subjectFilter" aria-label="Filter sessions by subject">
-          <option value="all">All subjects</option>
-        </select>
-        <select id="sessionFilter" aria-label="Filter study sessions">
-          <option value="all">All sessions</option>
-          <option value="pending">Planned</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-      <div id="scheduleList" class="item-list"></div>
+      <div id="sessionList" class="session-list"></div>
     </section>
-
-    <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">KNOW YOUR PROGRESS</p>
-          <h2>Subject tracker</h2>
-        </div>
-      </div>
-      <p class="muted">Completed study sessions and planned study time for each subject.</p>
-      <div id="subjectStats" class="subject-stats"></div>
-    </section>
-
-    <section class="panel timer-panel">
-      <p class="eyebrow">FOCUS MODE</p>
-      <h2>Pomodoro timer</h2>
-      <p class="muted">Focus for 25 minutes, then take a short break.</p>
-      <div id="timer" class="timer" role="timer" aria-live="off">25:00</div>
-      <div class="timer-buttons">
-        <button id="startTimer" class="button">Start</button>
-        <button id="pauseTimer" class="button secondary">Pause</button>
-        <button id="resetTimer" class="button secondary">Reset</button>
-      </div>
-      <p id="timerMessage" class="muted" aria-live="polite">Ready when you are.</p>
-    </section>
-
-    <section class="panel backup-panel">
-      <p class="eyebrow">KEEP YOUR DATA SAFE</p>
-      <h2>Backup & restore</h2>
-      <p class="muted">Download your assignments and sessions to keep a copy, or restore them from a previous backup.</p>
-      <div class="backup-actions">
-        <button id="backupBtn" class="button">Download JSON backup</button>
-        <button id="csvBtn" class="button secondary">Export assignments CSV</button>
-        <label class="button secondary file-button" for="restoreInput">Restore from backup</label>
-        <input id="restoreInput" class="visually-hidden" type="file" accept=".json,application/json">
-      </div>
-      <p id="backupMessage" class="muted" aria-live="polite"></p>
-      <p class="small muted">Restoring replaces the current assignments and sessions. Export a backup first if you need to keep your current data.</p>
-    </section>
-
-    <footer class="footer">
-      <strong>StudyHub.</strong> Built for your goals. Keep learning, keep growing.
-      <p class="small muted">Your data stays in this browser unless you export it.</p>
-    </footer>
   </main>
-  <footer class="site-footer">
-  <p>Developed with ❤️ by <strong>Ishal</strong></p>
-  <p>© 2026 Student Productivity Hub</p>
-</footer>
+
+  <footer>
+    Student Productivity Hub · Developed by <strong>ishal</strong>
+  </footer>
 </body>
 </html>
