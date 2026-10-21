@@ -143,5 +143,38 @@
   <footer>
     Student Productivity Hub · Developed by <strong>ishal</strong>
   </footer>
+  <section class="panel timer-panel">
+  <p class="eyebrow">FOCUS MODE</p>
+  <h2>Study Timer</h2>
+  <p class="timer-subtitle">Focus on one task at a time.</p>
+
+  <div class="timer-presets">
+    <button type="button" class="outline-btn timer-preset"
+      data-minutes="25">25 min</button>
+    <button type="button" class="outline-btn timer-preset"
+      data-minutes="50">50 min</button>
+    <button type="button" class="outline-btn timer-preset"
+      data-minutes="60">60 min</button>
+  </div>
+
+  <div id="timerDisplay" class="timer-display"
+    role="timer" aria-live="off">25:00</div>
+
+  <p id="timerStatus" class="timer-status" aria-live="polite">
+    Ready to focus
+  </p>
+
+  <div class="timer-controls">
+    <button type="button" id="timerStart" class="primary-btn">
+      Start
+    </button>
+    <button type="button" id="timerPause" class="outline-btn">
+      Pause
+    </button>
+    <button type="button" id="timerReset" class="outline-btn">
+      Reset
+    </button>
+  </div>
+</section>
 </body>
 </html>
